@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    // 1. Buscar evento por su código único de negocio[cite: 3]
+    // 1. Buscar evento por su código único
     Optional<Event> findByEventCode(String eventCode);
 
     // 2. Consultar eventos publicados ordenados por fecha ascendente (Requisito FR-EVT-005)[cite: 3]

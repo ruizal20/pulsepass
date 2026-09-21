@@ -27,13 +27,13 @@ El modelo relacional implementado consta de las siguientes asociaciones clave:
 ## 4. Migraciones de Flyway (`db/migration`)
 El esquema de la base de datos se despliega de forma automatizada mediante tres migraciones versionadas:
 1. `V1__create_schema.sql`: Crea las tablas principales (`venues`, `events`, `artists`, `event_artists`, `users`, `user_profiles`, `tickets`) con sus respectivas llaves primarias, foráneas, constraints `UNIQUE` y validaciones `CHECK`[cite: 3].
-2. `V2__insert_initial_artists.sql`: Inserta el catálogo inicial de artistas de prueba (*Solar Beat, Neon Waves, Caribbean Sound, Ocean Drive, Digital Pulse*)[cite: 3].
+2. `V2__insert_initial_artists.sql`: Inserta el catálogo inicial de artistas de prueba (*Solar Beat, Neon Waves, Caribbean Sound, Ocean Drive, Digital Pulse*).
 3. `V3__add_streaming_url_to_event.sql`: Agrega la columna opcional `streaming_url` a la tabla de eventos[cite: 3].
 
 ## 5. Instrucciones para Ejecutar las Pruebas
-Las pruebas de integración validan tanto el comportamiento funcional como la integridad de las restricciones en PostgreSQL utilizando Testcontainers[cite: 3]. 
+Las pruebas de integración validan tanto el comportamiento funcional como la integridad de las restricciones en PostgreSQL utilizando Testcontainers. 
 
-> **Requisito previo:** Asegúrate de tener **Docker Desktop** abierto y ejecutándose en tu computadora[cite: 3].
+Asegúrate de tener **Docker Desktop** abierto y ejecutándose en tu computadora[cite: 3].
 
 Para compilar el proyecto y ejecutar las pruebas de integración, utiliza el siguiente comando de Maven en tu terminal[cite: 2, 3]:
 ```bash
