@@ -47,4 +47,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("city") String city,
             @Param("artistKeyword") String artistKeyword
     );
+
+    boolean existsByEventCode(String eventCode);
 }

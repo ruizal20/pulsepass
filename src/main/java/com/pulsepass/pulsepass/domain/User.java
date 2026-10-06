@@ -42,7 +42,7 @@ public class User {
     // Método para asociar el perfil de manera sincronizada
     public void assignProfile(UserProfile profile) {
         this.userProfile = profile;
-        // profile.setUser(this);
+        //profile.setUser(this);
     }
 
     // Getters

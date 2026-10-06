@@ -88,4 +88,9 @@ public class Event {
     public String getStreamingUrl() { return streamingUrl; }
     public Venue getVenue() { return venue; }
     public Set<Artist> getArtists() { return artists; }
+
+  public void setStatus(EventStatus status) {
+        this.status = status;
+    }
+
 }

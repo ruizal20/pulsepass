@@ -63,4 +63,9 @@ public class Ticket {
     public LocalDateTime getPurchaseDate() { return purchaseDate; }
     public User getUser() { return user; }
     public Event getEvent() { return event; }
+
+    public void setStatus(TicketStatus cancelled) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setStatus'");
+    }
 }

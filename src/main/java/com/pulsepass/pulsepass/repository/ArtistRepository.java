@@ -11,4 +11,7 @@ public interface ArtistRepository extends JpaRepository<Artist, Long> {
 
     // Query Method para buscar un artista por su nombre artístico único
     Optional<Artist> findByStageName(String stageName);
+
+    Optional<Artist> findByActiveTrueOrderByStageNameAsc();
+
 }
