@@ -1,0 +1,29 @@
+package com.pulsepass.pulsepass.controller;
+
+import com.pulsepass.pulsepass.dto.response.VenueResponseDto;
+import com.pulsepass.pulsepass.service.VenueService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/venues")
+public class VenueController {
+
+    private final VenueService venueService;
+
+    public VenueController(VenueService venueService) {
+        this.venueService = venueService;
+    }
+
+    @GetMapping("/{code}")
+    public ResponseEntity<VenueResponseDto> getByCode(@PathVariable String code) {
+        return ResponseEntity.ok(venueService.findByCode(code));
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<VenueResponseDto>> getActiveVenues() {
+        return ResponseEntity.ok(venueService.findActiveVenues());
+    }
+}

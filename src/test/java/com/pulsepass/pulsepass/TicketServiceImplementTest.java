@@ -80,9 +80,10 @@ class TicketServiceImplTest {
         Ticket savedTicket = new Ticket("TCK-12345", TicketType.GENERAL, BigDecimal.valueOf(50000), TicketStatus.PAID, LocalDateTime.now(), activeUser, publishedEvent);
         when(ticketRepository.save(any(Ticket.class))).thenReturn(savedTicket);
 
-        TicketResponseDto responseDto = new TicketResponseDto();
-        responseDto.setTicketCode("TCK-12345");
-        responseDto.setStatus(TicketStatus.PAID);
+        TicketResponseDto responseDto = new TicketResponseDto(
+                1L, "TCK-12345", TicketType.GENERAL, BigDecimal.valueOf(50000),
+                TicketStatus.PAID, LocalDateTime.now(), null
+        );
         when(ticketMapper.toDto(any(Ticket.class))).thenReturn(responseDto);
 
         // ACT
@@ -90,8 +91,8 @@ class TicketServiceImplTest {
 
         // ASSERT
         assertThat(result).isNotNull();
-        assertThat(result.getTicketCode()).isEqualTo("TCK-12345");
-        assertThat(result.getStatus()).isEqualTo(TicketStatus.PAID);
+        assertThat(result.ticketCode()).isEqualTo("TCK-12345");
+        assertThat(result.status()).isEqualTo(TicketStatus.PAID);
 
         // Verificar que se llamó al repositorio para guardar
         verify(ticketRepository, times(1)).save(any(Ticket.class));
