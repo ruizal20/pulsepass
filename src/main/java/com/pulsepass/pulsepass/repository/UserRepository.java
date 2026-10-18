@@ -9,10 +9,11 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Buscar un usuario por su email ignorando o evaluando exactitud (Requisito PRD)
     Optional<User> findByEmail(String email);
 
     Optional<User> findByUsername(String username);
+
+    Optional<User> findByEmailIgnoreCase(String email);
 
 	boolean existsByUsername(String username);
 

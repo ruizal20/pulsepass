@@ -1,11 +1,14 @@
 package com.pulsepass.pulsepass.controller;
 
 import com.pulsepass.pulsepass.dto.response.VenueResponseDto;
+import com.pulsepass.pulsepass.security.CustomUserDetailsService;
+import com.pulsepass.pulsepass.security.JwtService;
 import com.pulsepass.pulsepass.service.VenueService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,6 +30,15 @@ class VenueControllerTest {
 
     @MockitoBean
     private VenueService venueService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     private VenueResponseDto venue() {
         return new VenueResponseDto(

@@ -1,14 +1,16 @@
 package com.pulsepass.pulsepass.controller;
 
-import com.pulsepass.pulsepass.controller.ArtistController;
 import com.pulsepass.pulsepass.dto.response.ArtistResponseDto;
 import com.pulsepass.pulsepass.service.ArtistService;
+import com.pulsepass.pulsepass.security.CustomUserDetailsService;
+import com.pulsepass.pulsepass.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.web.AuthenticationEntryPoint;
 
 import java.util.List;
 
@@ -28,6 +30,15 @@ class ArtistControllerTest {
 
     @MockitoBean
     private ArtistService artistService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     private ArtistResponseDto artist() {
         return new ArtistResponseDto(

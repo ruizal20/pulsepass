@@ -11,4 +11,5 @@ public interface EventService {
     EventResponseDto publish(String eventCode);
     EventResponseDto addArtist(String eventCode, Long artistId);
     List<EventResponseDto> findByArtist(String stageName);
+    List<EventResponseDto> findPublishedByArtist(String stageName);
 }

@@ -1,0 +1,6 @@
+pulsepass:
+  security:
+    jwt:
+      issuer: pulsepass-test
+      secret-base64: CMa16kf4WBJ8Y9HY0SbU3ReewT2pTJCfLYluLUPQeXg=
+      access-token-ttl: PT15M

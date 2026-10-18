@@ -1,7 +1,6 @@
 
 package com.pulsepass.pulsepass.controller;
 
-import com.pulsepass.pulsepass.controller.EventController;
 import com.pulsepass.pulsepass.domain.EventCategory;
 import com.pulsepass.pulsepass.domain.EventStatus;
 import com.pulsepass.pulsepass.domain.TicketStatus;
@@ -11,8 +10,14 @@ import com.pulsepass.pulsepass.dto.response.ArtistResponseDto;
 import com.pulsepass.pulsepass.dto.response.EventResponseDto;
 import com.pulsepass.pulsepass.dto.response.TicketResponseDto;
 import com.pulsepass.pulsepass.dto.response.VenueResponseDto;
+import com.pulsepass.pulsepass.security.CustomUserDetailsService;
+import com.pulsepass.pulsepass.security.JwtService;
+import com.pulsepass.pulsepass.security.SecurityConfig;
+import com.pulsepass.pulsepass.security.RestAuthenticationEntryPoint;
+import com.pulsepass.pulsepass.security.RestAccessDeniedHandler;
 import com.pulsepass.pulsepass.service.EventService;
 import com.pulsepass.pulsepass.service.TicketService;
+import com.pulsepass.pulsepass.service.AuthorizationService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +25,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.context.annotation.Import;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,8 +41,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @WebMvcTest(EventController.class)
+@Import({
+        SecurityConfig.class,
+        RestAuthenticationEntryPoint.class,
+        RestAccessDeniedHandler.class
+})
 class EventControllerTest {
 
     @Autowired
@@ -47,6 +59,15 @@ class EventControllerTest {
 
     @MockitoBean
     private TicketService ticketService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean(name = "authorizationService")
+    private AuthorizationService authorizationService;
 
     private VenueResponseDto venue() {
         return new VenueResponseDto(
@@ -107,9 +128,10 @@ class EventControllerTest {
                 """;
 
         mockMvc.perform(post("/api/events")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(body))
+                .with(user("admin").roles("ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(
                         MediaType.APPLICATION_JSON))
@@ -135,6 +157,7 @@ class EventControllerTest {
                 """;
 
         mockMvc.perform(post("/api/events")
+                        .with(user("admin").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -153,8 +176,13 @@ class EventControllerTest {
         when(eventService.findByCode("EVT-001"))
                 .thenReturn(event(EventStatus.PUBLISHED));
 
+        when(authorizationService.canViewEvent(
+                org.mockito.ArgumentMatchers.eq("EVT-001"),
+                org.mockito.ArgumentMatchers.any()
+        )).thenReturn(true);
+
         mockMvc.perform(get("/api/events/{eventCode}", "EVT-001")
-                        .accept(MediaType.APPLICATION_JSON))
+                .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(
                         MediaType.APPLICATION_JSON))
@@ -186,7 +214,8 @@ class EventControllerTest {
                 .thenReturn(event(EventStatus.PUBLISHED));
 
         mockMvc.perform(patch("/api/events/{eventCode}/publish", "EVT-001")
-                        .accept(MediaType.APPLICATION_JSON))
+                .with(user("admin").roles("ADMIN"))
+                .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
 
@@ -202,7 +231,8 @@ class EventControllerTest {
         mockMvc.perform(post(
                         "/api/events/{eventCode}/artists/{artistId}",
                         "EVT-001", 7L)
-                        .accept(MediaType.APPLICATION_JSON))
+                .with(user("admin").roles("ADMIN"))
+                .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.eventCode").value("EVT-001"));
 
@@ -212,16 +242,17 @@ class EventControllerTest {
 
     @Test
     void shouldFindEventsByArtist() throws Exception {
-        when(eventService.findByArtist("La Voz Caribe"))
+        when(eventService.findPublishedByArtist("La Voz Caribe"))
                 .thenReturn(List.of(event(EventStatus.PUBLISHED)));
 
         mockMvc.perform(get("/api/events/by-artist")
                         .param("stageName", "La Voz Caribe")
                         .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].eventCode").value("EVT-001"));
 
-        verify(eventService).findByArtist("La Voz Caribe");
+        verify(eventService).findPublishedByArtist("La Voz Caribe");
         verifyNoMoreInteractions(eventService);
     }
 
@@ -232,7 +263,8 @@ class EventControllerTest {
 
         mockMvc.perform(get(
                         "/api/events/{eventCode}/tickets/paid", "EVT-001")
-                        .accept(MediaType.APPLICATION_JSON))
+                .with(user("staff").roles("STAFF"))
+                .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ticketCode").value("TCK-001"))
                 .andExpect(jsonPath("$[0].status").value("PAID"));

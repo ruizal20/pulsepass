@@ -26,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
@@ -35,6 +37,9 @@ class UserServiceImplTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -43,6 +48,7 @@ class UserServiceImplTest {
         RegisterUserRequest request = new RegisterUserRequest(
                 "carlos123",
                 "carlos@email.com",
+                "UnaFraseSegura2026!",
                 "Carlos",
                 "Pérez",
                 "3001234567",
@@ -55,6 +61,9 @@ class UserServiceImplTest {
 
         when(userRepository.existsByEmailIgnoreCase("carlos@email.com"))
                 .thenReturn(false);
+        
+        when(passwordEncoder.encode("UnaFraseSegura2026!"))
+            .thenReturn("$2a$10$hashDePrueba");
 
         User savedUser = new User(
                 "carlos123",
@@ -92,7 +101,8 @@ class UserServiceImplTest {
     void shouldThrowExceptionWhenUsernameAlreadyExists() {
         RegisterUserRequest request = new RegisterUserRequest(
                 "carlos123",
-                "nuevo@email.com",
+                "carlos@email.com",
+                "UnaFraseSegura2026!",
                 "Carlos",
                 "Pérez",
                 "3001234567",
@@ -116,8 +126,9 @@ class UserServiceImplTest {
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExists() {
         RegisterUserRequest request = new RegisterUserRequest(
-                "carlos_nuevo",
+                "carlos123",
                 "carlos@email.com",
+                "UnaFraseSegura2026!",
                 "Carlos",
                 "Pérez",
                 "3001234567",
@@ -125,7 +136,7 @@ class UserServiceImplTest {
                 LocalDate.of(1995, 8, 20)
         );
 
-        when(userRepository.existsByUsername("carlos_nuevo"))
+        when(userRepository.existsByUsername("carlos123"))
                 .thenReturn(false);
 
         when(userRepository.existsByEmailIgnoreCase("carlos@email.com"))
@@ -146,6 +157,7 @@ class UserServiceImplTest {
         RegisterUserRequest request = new RegisterUserRequest(
                 "future_user",
                 "future@email.com",
+                "SegundaFraseSegura2026!",
                 "Future",
                 "User",
                 "3001234567",

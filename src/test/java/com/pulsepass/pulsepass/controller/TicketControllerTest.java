@@ -9,12 +9,15 @@ import com.pulsepass.pulsepass.dto.request.PurchaseTicketRequest;
 import com.pulsepass.pulsepass.dto.response.EventResponseDto;
 import com.pulsepass.pulsepass.dto.response.TicketResponseDto;
 import com.pulsepass.pulsepass.dto.response.VenueResponseDto;
+import com.pulsepass.pulsepass.security.CustomUserDetailsService;
+import com.pulsepass.pulsepass.security.JwtService;
 import com.pulsepass.pulsepass.service.TicketService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -41,6 +44,15 @@ class TicketControllerTest {
 
     @MockitoBean
     private TicketService ticketService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     private TicketResponseDto ticket(TicketStatus state) {
         EventResponseDto event = new EventResponseDto(

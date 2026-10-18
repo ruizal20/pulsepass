@@ -64,8 +64,7 @@ public class Ticket {
     public User getUser() { return user; }
     public Event getEvent() { return event; }
 
-    public void setStatus(TicketStatus cancelled) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setStatus'");
+    public void setStatus(TicketStatus status) {
+        this.status = status;
     }
 }
