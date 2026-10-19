@@ -1,0 +1,1706 @@
+{
+  "info": {
+    "_postman_id": "6cb1bf4b-f010-4b1a-93b7-59fc3d10e505",
+    "name": "PulsePass — Manual E2E",
+    "description": "Colección Postman v2.1 para ejecución MANUAL de la Fase 5. Enviar cada request con Send. No contiene scripts Pre-request/Tests ni debe ejecutarse con Collection Runner. Antes de usarla, leer tests/e2e/README.md y preparar PostgreSQL pulsepass_e2e y fixtures.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "00 Preparación / conectividad",
+      "description": "Antes de enviar requests: selecciona PulsePass-local; confirma aplicación arriba, PostgreSQL E2E, migraciones Flyway y variables completas. No existe un endpoint /health en el contrato. Para probar conectividad usa VEN-01 en la carpeta 01.",
+      "item": []
+    },
+    {
+      "name": "01 Venues (2 rutas)",
+      "description": "",
+      "item": [
+        {
+          "name": "VEN-01 — GET venues activos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/venues/active",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso VEN-01. Esperado: 200 y un arreglo JSON. Identifica un recinto activo y copia su campo `code` a la variable `venueActiveCode`. No supongas IDs ni códigos."
+        },
+        {
+          "name": "VEN-02 — GET venue por código",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/venues/{{venueActiveCode}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso VEN-02. Precondición: `venueActiveCode` tomado de VEN-01. Esperado: 200 y un objeto VenueResponseDto con code, name, city, address, capacity y active coherentes."
+        }
+      ]
+    },
+    {
+      "name": "02 Artists (3 rutas)",
+      "description": "",
+      "item": [
+        {
+          "name": "ART-01 — GET artistas activos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/artists/active",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso ART-01. Esperado: 200 y arreglo de artistas activos. Copia el `id` de un artista y su `stageName` real a las variables `artistId` y `artistStageName`."
+        },
+        {
+          "name": "ART-02 — GET artista por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/artists/{{artistId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso ART-02. Precondición: `artistId` obtenido del arreglo de ART-01. Esperado: 200 con id, stageName, biography y musicalGenre según el DTO real."
+        },
+        {
+          "name": "ART-03 — GET artista por nombre artístico",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/artists/by-stage-name?stageName={{artistStageName}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso ART-03. Esperado: 200. Usa el nombre artístico exacto obtenido de ART-01. Verifica que corresponda al mismo artista."
+        }
+      ]
+    },
+    {
+      "name": "03 Auth / usuarios (registro, login, me)",
+      "description": "",
+      "item": [
+        {
+          "name": "AUTH-01 / USR-01 — Registrar USER_A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userAUsername}}\",\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{userAPassword}}\",\n  \"firstName\": \"Andrea\",\n  \"lastName\": \"Pruebas E2E\",\n  \"phone\": \"3000000001\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1998-05-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Casos TC-AUTH-001 y USR-01. Esperado: 201. La respuesta debe incluir usuario/perfil según UserResponseDto y no debe exponer password ni passwordHash. El rol predeterminado debe ser USER; copia ningún secreto de la respuesta."
+        },
+        {
+          "name": "AUTH-LOGIN — Login USER_A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userAUsername}}\",\n  \"password\": \"{{userAPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Casos TC-AUTH-002/003. Esperado: 200; accessToken no vacío, tokenType Bearer y expiresIn igual al TTL configurado (por defecto 900). Copia manualmente accessToken en la variable local userAToken; no uses scripts."
+        },
+        {
+          "name": "AUTH-ME — Identidad USER_A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TC-AUTH-006. Esperado: 200 con id, username, email y role de USER_A. No debe revelar hash ni contraseña."
+        }
+      ]
+    },
+    {
+      "name": "03A Preparación de actores / fixtures (pasos manuales)",
+      "description": "Estas solicitudes son auxiliares; repiten rutas para preparar identidades/tickets. No son endpoints adicionales. Registra/promueve roles mediante el SQL exclusivo de E2E y haz login después del cambio de rol.",
+      "item": [
+        {
+          "name": "Preparación — Registrar USER_B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userBUsername}}\",\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{userBPassword}}\",\n  \"firstName\": \"Beatriz\",\n  \"lastName\": \"Pruebas E2E\",\n  \"phone\": \"3000000002\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1997-04-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Registrar USER_B una sola vez. Esperado: 201; usa correo y username distintos a USER_A. Si existe de una ejecución previa, resetear la BD E2E o cambiar las variables y fixture SQL."
+        },
+        {
+          "name": "Preparación — Registrar ADMIN fixture como USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Fixture E2E\",\n  \"phone\": \"3000000003\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1990-01-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Regístralo primero por el endpoint público. El registro no debe permitir establecer ADMIN desde el JSON. Después ejecuta fixtures/seed-e2e.sql en pulsepass_e2e para promoverlo."
+        },
+        {
+          "name": "Preparación — Registrar STAFF fixture como USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{staffUsername}}\",\n  \"email\": \"{{staffEmail}}\",\n  \"password\": \"{{staffPassword}}\",\n  \"firstName\": \"Staff\",\n  \"lastName\": \"Fixture E2E\",\n  \"phone\": \"3000000004\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1990-02-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Regístralo primero por el endpoint público; luego promuévelo a STAFF con fixtures/seed-e2e.sql."
+        },
+        {
+          "name": "Preparación — Registrar usuario que se inactivará",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{inactiveUsername}}\",\n  \"email\": \"{{inactiveEmail}}\",\n  \"password\": \"{{inactivePassword}}\",\n  \"firstName\": \"Inactivo\",\n  \"lastName\": \"Fixture E2E\",\n  \"phone\": \"3000000005\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1990-03-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Regístralo primero, después el fixture SQL lo marcará active=false. No debe iniciar sesión después de la desactivación."
+        },
+        {
+          "name": "Preparación — Login USER_B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userBUsername}}\",\n  \"password\": \"{{userBPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Login con USER_B; copia accessToken a userBToken."
+        },
+        {
+          "name": "Preparación — Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{adminIdentifier}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Hazlo después del seed SQL; copia accessToken a adminToken."
+        },
+        {
+          "name": "Preparación — Login STAFF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{staffIdentifier}}\",\n  \"password\": \"{{staffPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Hazlo después del seed SQL; copia accessToken a staffToken."
+        },
+        {
+          "name": "Preparación — Crear segundo evento borrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"{{draftEventCode}}\",\n  \"name\": \"PulsePass Draft E2E {{runId}}\",\n  \"description\": \"Borrador de pruebas de visibilidad.\",\n  \"category\": \"MUSIC\",\n  \"eventDate\": \"{{eventDate}}\",\n  \"minimumAge\": 0,\n  \"venueCode\": \"{{venueActiveCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Crear un evento adicional, distinto de eventToPublishCode, para probar que un visitante/USER no ve borradores. Esperado 201 DRAFT."
+        }
+      ]
+    },
+    {
+      "name": "04 Usuarios / consulta y propiedad (2 rutas)",
+      "description": "",
+      "item": [
+        {
+          "name": "USR-02 — GET usuario por email propio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/by-email?email={{userAEmail}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso USR-02. Esperado: 200 con el usuario propio, sin datos de credenciales."
+        },
+        {
+          "name": "USR-03 — GET usuario por username propio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/by-username?username={{userAUsername}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso USR-03. Esperado: 200 con el usuario propio, sin datos de credenciales."
+        }
+      ]
+    },
+    {
+      "name": "05 Events / administración y visibilidad (6 rutas)",
+      "description": "",
+      "item": [
+        {
+          "name": "EVT-01 — Crear evento como ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"{{eventToPublishCode}}\",\n  \"name\": \"PulsePass E2E {{runId}}\",\n  \"description\": \"Evento de pruebas manuales E2E.\",\n  \"category\": \"MUSIC\",\n  \"eventDate\": \"{{eventDate}}\",\n  \"minimumAge\": 0,\n  \"venueCode\": \"{{venueActiveCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso EVT-01. Antes debes registrar ADMIN como usuario normal, promoverlo mediante el fixture SQL en la base pulsepass_e2e y hacer login de nuevo. Esperado: 201 y evento inicialmente DRAFT. Revisa el DTO completo; si title llega null, registra el defecto, pues MapStruct ha avisado que `title` no se mapea."
+        },
+        {
+          "name": "EVT-05 — Asociar artista como ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{eventToPublishCode}}/artists/{{artistId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso EVT-05. Esperado: 200; verifica que el artista se encuentre en `artists` de la respuesta. Enviar de nuevo el mismo artista debe producir el conflicto definido por el servicio."
+        },
+        {
+          "name": "EVT-04 — Publicar evento como ADMIN",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{eventToPublishCode}}/publish",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso EVT-04. Esperado: 200 y estado PUBLISHED. Solo se debe publicar un evento en DRAFT, con fecha futura y recinto activo."
+        },
+        {
+          "name": "EVT-02 — Consultar evento por código publicado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{publishedEventCode}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso EVT-02. Esperado: 200 para un evento PUBLISHED; no debe exponer campos internos o borradores."
+        },
+        {
+          "name": "EVT-03 — Listar eventos publicados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/published",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso EVT-03. Esperado: 200 y arreglo; comprueba que los eventos DRAFT no aparezcan."
+        },
+        {
+          "name": "EVT-06 — Consultar eventos por artista",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/by-artist?stageName={{artistStageName}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "Caso EVT-06. Esperado: 200 y solo eventos publicados para visitantes. Usa stageName exacto."
+        }
+      ]
+    },
+    {
+      "name": "06 Tickets / compra, consulta y ciclo de vida (6 rutas)",
+      "description": "",
+      "item": [
+        {
+          "name": "TKT-01 — Comprar entrada USER_A (para cancelar)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userAEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TKT-01. Precondición: `publishedEventCode` identifica evento publicado y `userAEmail` corresponde al token. Esperado: 201, ticketCode no vacío, type GENERAL, price calculado por backend (50 000), estado PAID. Copia ticketCode en ticketCancelableCode."
+        },
+        {
+          "name": "Preparación TKT — Comprar segunda entrada para usar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userAEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Antes de TKT-06, crea una segunda entrada PAID independiente y copia su `ticketCode` a `ticketUsableCode`. No uses la entrada que vas a cancelar. Ejecutar después de que publishedEventCode apunte a evento publicado."
+        },
+        {
+          "name": "TKT-02 — Consultar entrada propia por código",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TKT-02. Esperado: 200; comprueba propietario de forma indirecta con el endpoint de lista, ticketCode y estado."
+        },
+        {
+          "name": "TKT-03 — Listar entradas propias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/by-user?email={{userAEmail}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TKT-03. Esperado: 200 y solo las entradas asociadas al email de USER_A."
+        },
+        {
+          "name": "TKT-04 — Listar entradas pagadas del evento como STAFF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{publishedEventCode}}/tickets/paid",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TKT-04. Esperado: 200 con entradas PAID del evento. Requiere STAFF o ADMIN."
+        },
+        {
+          "name": "TKT-05 — Cancelar entrada propia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}/cancel",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TKT-05. Esperado: 200, estado CANCELLED. No reutilices esta entrada para el escenario de uso; una segunda cancelación debe dar 409 según regla de negocio."
+        },
+        {
+          "name": "TKT-06 — Marcar entrada como usada (STAFF)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketUsableCode}}/use",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "Caso TKT-06. Esperado: 200 y estado USED. Necesitas una segunda entrada PAID independiente; usa el request de preparación de ticket usable y copia el código a ticketUsableCode."
+        }
+      ]
+    },
+    {
+      "name": "07 Seguridad / escenarios negativos",
+      "description": "",
+      "item": [
+        {
+          "name": "SEC-01 — Anónimo intenta crear evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"{{eventToPublishCode}}\",\n  \"name\": \"PulsePass E2E {{runId}}\",\n  \"description\": \"Evento de pruebas manuales E2E.\",\n  \"category\": \"MUSIC\",\n  \"eventDate\": \"{{eventDate}}\",\n  \"minimumAge\": 0,\n  \"venueCode\": \"{{venueActiveCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-001. Usa un payload válido. Esperado: 401 para visitante no autenticado. No uses un payload inválido porque un 400 enmascararía el control de acceso."
+        },
+        {
+          "name": "SEC-02 — USER intenta crear evento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"{{eventToPublishCode}}\",\n  \"name\": \"PulsePass E2E {{runId}}\",\n  \"description\": \"Evento de pruebas manuales E2E.\",\n  \"category\": \"MUSIC\",\n  \"eventDate\": \"{{eventDate}}\",\n  \"minimumAge\": 0,\n  \"venueCode\": \"{{venueActiveCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-001. Esperado: 403; no debe crearse el evento. Comprueba luego con ADMIN que no existe."
+        },
+        {
+          "name": "SEC-03 — USER intenta publicar evento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{draftEventCode}}/publish",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-002. Esperado: 403; después consulta el estado como ADMIN y verifica que siga DRAFT."
+        },
+        {
+          "name": "SEC-04 — USER intenta asociar artista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{draftEventCode}}/artists/{{artistId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-003. Esperado: 403 y la asociación no debe realizarse."
+        },
+        {
+          "name": "SEC-05 — Anónimo consulta borrador",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{draftEventCode}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-004. La consulta de un borrador debe ser denegada (esperar 401 con traducción de acceso anónimo en Spring Security, y confirmar el resultado real). No aceptar información del borrador."
+        },
+        {
+          "name": "SEC-06 — USER_B consulta email de USER_A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/by-email?email={{userAEmail}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-006. Esperado: 403 por propiedad. No debe mostrarse información de USER_A."
+        },
+        {
+          "name": "SEC-07 — USER_B consulta username de USER_A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/by-username?username={{userAUsername}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-007. Esperado: 403 por propiedad."
+        },
+        {
+          "name": "SEC-08 — USER_A intenta comprar para USER_B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userBEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-008. Esperado: 403 por discrepancia de propiedad. Comprueba con USER_B/Admin que no se generó entrada nueva."
+        },
+        {
+          "name": "SEC-09 — USER_B consulta ticket de USER_A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-009. Esperado: 403; no revelar datos de la entrada ajena."
+        },
+        {
+          "name": "SEC-10 — USER_B lista entradas de USER_A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/by-user?email={{userAEmail}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-010. Esperado: 403."
+        },
+        {
+          "name": "SEC-11 — USER_B intenta cancelar ticket de USER_A",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}/cancel",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-011. Esperado: 403. Después, como USER_A, consulta ticket y comprueba que conserva estado PAID antes de ejecutar TKT-05."
+        },
+        {
+          "name": "SEC-12 — USER intenta listar entradas pagadas del evento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/events/{{publishedEventCode}}/tickets/paid",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-013. Esperado: 403; solo STAFF/ADMIN."
+        },
+        {
+          "name": "SEC-13 — USER_B intenta marcar ticket como usado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketUsableCode}}/use",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-012. Esperado: 403. Comprueba con STAFF que el estado del ticket sigue PAID."
+        },
+        {
+          "name": "SEC-14 — Login con token inventado a /me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "token-invalido-no-es-jwt",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-008. Configura manualmente Authorization: Bearer TOKEN_INVALIDO en la pestaña Authorization. Esperado: 401 y ErrorResponse; borrar luego el encabezado/token antes de continuar."
+        },
+        {
+          "name": "AUTH-NEG-01 — /me sin Authorization",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-007. No envíes header Authorization. Esperado: 401 + ErrorResponse."
+        },
+        {
+          "name": "AUTH-NEG-02 — Login de usuario inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"no-existe-{{runId}}\",\n  \"password\": \"{{wrongPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-005. Esperado: 401 con mensaje genérico equivalente al de contraseña incorrecta; no debe enumerar usuarios."
+        },
+        {
+          "name": "AUTH-NEG-03 — Login USER_A por email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userAEmail}}\",\n  \"password\": \"{{userAPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-003. Esperado: 200 y token para el mismo usuario. Copia accessToken a userAToken; reemplaza el token previo si ya había expirado."
+        },
+        {
+          "name": "AUTH-NEG-04 — Bearer manipulado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-009. Primero copia un JWT de prueba al campo Token de Authorization y cambia manualmente un carácter. No guardes ni exportes el token alterado. Esperado: 401."
+        },
+        {
+          "name": "AUTH-NEG-05 — JWT enviado como query param",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me?token={{userAToken}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-012. No uses Authorization; el token en query no debe autenticar. Esperado: 401."
+        },
+        {
+          "name": "AUTH-NEG-06 — Bearer inválido en ruta pública",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/venues/active",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "token-invalido-no-es-jwt",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-015. Configura manualmente Authorization: Bearer token-invalido-no-es-jwt. La presencia de un Bearer inválido no debe ser aceptada; verificar respuesta 401 según filtro actual."
+        },
+        {
+          "name": "AUTH-NEG-07 — Login de usuario inactivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{inactiveUsername}}\",\n  \"password\": \"{{inactivePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-013 (login). Después del seed, inactiveEmail está inactivo. Esperado: 401; no se emite token."
+        },
+        {
+          "name": "AUTH-NEG-08 — Token previo tras inactivar usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{inactiveToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-013 (token previo). Requiere: activar temporalmente al usuario en pulsepass_e2e, hacer login, copiar accessToken a inactiveToken, volver a desactivar al usuario y enviar esta solicitud. Esperado: 401 por cuenta inactiva."
+        },
+        {
+          "name": "AUTH-NEG-09 — JWT expirado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-010. Copia el token en variable local, espera a que supere su `expiresIn` (por defecto 900 segundos) y envíalo sin renovarlo. Esperado: 401. Puedes marcar BLOCKED si no esperaste su expiración."
+        },
+        {
+          "name": "AUTH-NEG-10 — Firma/issuer no válido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "PEGAR_TOKEN_DE_PRUEBA_FIRMADO_CON_CLAVE_E2E_ALTERNATIVA",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-011. En la pestaña Authorization usa un JWT creado fuera de Postman con una clave aleatoria exclusiva de E2E y/o issuer distinto. Nunca uses la clave real del entorno. Esperado: 401. Si no tienes un token de prueba seguro, marca BLOCKED; no fabriques un PASS."
+        }
+      ]
+    },
+    {
+      "name": "08 Validaciones y errores HTTP",
+      "description": "",
+      "item": [
+        {
+          "name": "HTTP-01 — Login con contraseña incorrecta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userAUsername}}\",\n  \"password\": \"{{wrongPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-AUTH-004. Esperado: 401 genérico, sin distinguir si el usuario existe."
+        },
+        {
+          "name": "HTTP-02 — Registro con campos inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"x\",\n  \"email\": \"correo-invalido\",\n  \"password\": \"corta\",\n  \"firstName\": \"\",\n  \"lastName\": \"Prueba\",\n  \"phone\": \"3000000099\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"2099-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-HTTP. Esperado: 400 con ErrorResponse y detalles de campos; no debe crear un usuario."
+        },
+        {
+          "name": "HTTP-03 — Registro duplicado USER_A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userAUsername}}\",\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{userAPassword}}\",\n  \"firstName\": \"Andrea\",\n  \"lastName\": \"Pruebas E2E\",\n  \"phone\": \"3000000001\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1998-05-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-HTTP. Esperado: 409 si USER_A ya está registrado; comprueba que error use ErrorResponse."
+        },
+        {
+          "name": "HTTP-04 — Repetir cancelación de ticket ya cancelado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}/cancel",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-BIZ-011. Ejecutar solo después de que TKT-05 haya cancelado la entrada. Esperado: 409; estado permanece CANCELLED."
+        },
+        {
+          "name": "HTTP-05 — Usar ticket ya usado por segunda vez",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tickets/{{ticketUsableCode}}/use",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "description": "TC-BIZ-013. Ejecutar solo después de que TKT-06 haya marcado la entrada USED. Esperado: 409; el estado permanece USED."
+        },
+        {
+          "name": "HTTP-06 — Inyectar role ADMIN en registro público",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{escalationUsername}}\",\n  \"email\": \"{{escalationEmail}}\",\n  \"password\": \"{{userAPassword}}\",\n  \"firstName\": \"Andrea\",\n  \"lastName\": \"Pruebas E2E\",\n  \"phone\": \"3000000001\",\n  \"city\": \"Santa Marta\",\n  \"birthDate\": \"1998-05-15\",\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "description": "TC-SEC-016. Este cuerpo agrega un campo no declarado por RegisterUserRequest. Esperado según configuración Jackson: registro 201 o rechazo validado, pero NUNCA debe dar rol ADMIN. Si se crea, haz login y confirma role USER."
+        }
+      ]
+    },
+    {
+      "name": "09 Flujos de negocio / secuencia recomendada",
+      "description": "Sigue la secuencia de tests/e2e/README.md y checklist-e2e-manual.md. Las operaciones mutables deben comprobarse con GET posterior. No utilizar Collection Runner; abrir cada petición y pulsar Send.",
+      "item": []
+    }
+  ]
+}
