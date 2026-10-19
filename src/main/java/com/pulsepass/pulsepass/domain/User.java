@@ -21,6 +21,13 @@ public class User {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
+    @Column(name = "password_hash", length = 100)
+    private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role = UserRole.USER;
+
     // Relación 1:1 bidireccional con UserProfile
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private UserProfile userProfile;
@@ -45,6 +52,19 @@ public class User {
         //profile.setUser(this);
     }
 
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public void setRole(UserRole role) {
+        if (role == null) {
+            throw new IllegalArgumentException("El rol del usuario es obligatorio.");
+        }
+
+        this.role = role;
+    }
+
+
     // Getters
     public Long getId() { return id; }
     public String getUsername() { return username; }
@@ -52,4 +72,6 @@ public class User {
     public Boolean getActive() { return active; }
     public UserProfile getUserProfile() { return userProfile; }
     public List<Ticket> getTickets() { return tickets; }
+    public UserRole getRole(){return role; }
+    public String getPasswordHash() {return passwordHash; }
 }

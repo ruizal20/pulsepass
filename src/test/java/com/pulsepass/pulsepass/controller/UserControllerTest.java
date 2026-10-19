@@ -5,12 +5,15 @@ import com.pulsepass.pulsepass.controller.UserController;
 import com.pulsepass.pulsepass.dto.request.RegisterUserRequest;
 import com.pulsepass.pulsepass.dto.response.UserProfileResponseDto;
 import com.pulsepass.pulsepass.dto.response.UserResponseDto;
+import com.pulsepass.pulsepass.security.CustomUserDetailsService;
+import com.pulsepass.pulsepass.security.JwtService;
 import com.pulsepass.pulsepass.service.UserService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +37,15 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     private UserResponseDto user() {
         UserProfileResponseDto profile = new UserProfileResponseDto(
@@ -59,6 +71,7 @@ class UserControllerTest {
                 {
                   "username": "ana98",
                   "email": "ana@example.com",
+                  "password": "ClaveSegura123",
                   "firstName": "Ana",
                   "lastName": "Lopez",
                   "phone": "3001234567",

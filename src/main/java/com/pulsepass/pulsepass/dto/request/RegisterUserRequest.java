@@ -18,6 +18,14 @@ public record RegisterUserRequest(
         @Email(message = "Email must be valid")
         String email,
 
+        @NotBlank(message = "Password is required")
+        @Size(
+            min = 12,
+            max = 72,
+            message = "Password must contain between 12 and 72 characters"
+        )
+        String password,
+
         @NotBlank(message = "First name is required")
         String firstName,
 

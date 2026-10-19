@@ -6,6 +6,7 @@ import com.pulsepass.pulsepass.service.TicketService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,27 +22,43 @@ public class TicketController {
     }
 
     @PostMapping
-    public ResponseEntity<TicketResponseDto> purchase(@Valid @RequestBody PurchaseTicketRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.purchase(request));
+    @PreAuthorize("@authorizationService.canPurchaseTicket(#p0, authentication)")
+    public ResponseEntity<TicketResponseDto> purchase(
+            @Valid @RequestBody PurchaseTicketRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ticketService.purchase(request));
     }
 
     @GetMapping("/{ticketCode}")
-    public ResponseEntity<TicketResponseDto> getByCode(@PathVariable String ticketCode) {
+    @PreAuthorize("@authorizationService.canAccessTicket(#p0, authentication)")
+    public ResponseEntity<TicketResponseDto> getByCode(
+            @PathVariable String ticketCode
+    ) {
         return ResponseEntity.ok(ticketService.findByCode(ticketCode));
     }
 
     @GetMapping("/by-user")
-    public ResponseEntity<List<TicketResponseDto>> getByUserEmail(@RequestParam String email) {
+    @PreAuthorize("@authorizationService.canAccessUserTickets(#p0, authentication)")
+    public ResponseEntity<List<TicketResponseDto>> getByUserEmail(
+            @RequestParam String email
+    ) {
         return ResponseEntity.ok(ticketService.findByUserEmail(email));
     }
 
     @PatchMapping("/{ticketCode}/cancel")
-    public ResponseEntity<TicketResponseDto> cancel(@PathVariable String ticketCode) {
+    @PreAuthorize("@authorizationService.canCancelTicket(#p0, authentication)")
+    public ResponseEntity<TicketResponseDto> cancel(
+            @PathVariable String ticketCode
+    ) {
         return ResponseEntity.ok(ticketService.cancel(ticketCode));
     }
 
     @PatchMapping("/{ticketCode}/use")
-    public ResponseEntity<TicketResponseDto> markAsUsed(@PathVariable String ticketCode) {
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<TicketResponseDto> markAsUsed(
+            @PathVariable String ticketCode
+    ) {
         return ResponseEntity.ok(ticketService.markAsUsed(ticketCode));
     }
 }

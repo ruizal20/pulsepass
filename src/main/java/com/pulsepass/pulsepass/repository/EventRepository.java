@@ -2,6 +2,8 @@ package com.pulsepass.pulsepass.repository;
 
 import com.pulsepass.pulsepass.domain.Event;
 import com.pulsepass.pulsepass.domain.EventStatus;
+import com.pulsepass.pulsepass.dto.response.EventResponseDto;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,4 +51,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     boolean existsByEventCode(String eventCode);
+
+    @Query("""
+        SELECT DISTINCT e
+        FROM Event e
+        JOIN e.artists a
+        WHERE a.stageName = :stageName
+        AND e.status = :status
+    """)
+    List<Event> findByArtistStageNameAndStatus(
+            @Param("stageName") String stageName,
+            @Param("status") EventStatus status
+    );
 }

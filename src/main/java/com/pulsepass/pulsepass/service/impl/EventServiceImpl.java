@@ -147,4 +147,13 @@ public class EventServiceImpl implements EventService {
                 .map(eventMapper::toDto)
                 .toList();
     }
+
+    @Override
+    public List<EventResponseDto> findPublishedByArtist(String stageName) {
+        return eventRepository
+                .findByArtistStageNameAndStatus(stageName, EventStatus.PUBLISHED)
+                .stream()
+                .map(eventMapper::toDto)
+                .toList();
+    }
 }
