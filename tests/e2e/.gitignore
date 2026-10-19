@@ -1,0 +1,18 @@
+
+# Variables de entorno y secretos locales
+.env
+.env.*
+!.env.example
+
+# Entornos privados de Postman que pueden contener tokens
+*.private.postman_environment.json
+*.secrets.postman_environment.json
+
+# Registros temporales y archivos de depuración
+*.log
+*.tmp
+*.bak
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
