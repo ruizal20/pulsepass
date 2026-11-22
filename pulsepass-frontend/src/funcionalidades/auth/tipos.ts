@@ -20,20 +20,31 @@ export type AuthResponse = z.infer<typeof AuthResponseSchema>
  * GET /api/auth/me. Supuesto (PRD R-FE-002): como mínimo username, email y roles.
  * Los roles se normalizan: "ROLE_ADMIN" → "ADMIN"; se descartan valores desconocidos.
  */
+
 export const UsuarioAutenticadoSchema = z
   .object({
+    id: z.number().optional(),
     username: z.string(),
     email: z.string(),
-    roles: z.array(z.string()),
+    role: z.string().optional(),
+    roles: z.array(z.string()).optional(),
   })
-  .loose()
-  .transform((u) => ({
-    username: u.username,
-    email: u.email,
-    roles: u.roles
-      .map((r) => r.replace(/^ROLE_/, '').toUpperCase())
-      .filter((r): r is Rol => RolSchema.safeParse(r).success),
-  }))
+  .refine(
+    (u) => Boolean(u.role) || Boolean(u.roles?.length),
+    { message: 'El usuario no tiene un rol válido.' },
+  )
+  .transform((u) => {
+    const rolesRecibidos = u.roles ?? (u.role ? [u.role] : [])
+
+    return {
+      username: u.username,
+      email: u.email,
+      roles: rolesRecibidos
+        .map((r) => r.replace(/^ROLE_/, '').toUpperCase())
+        .filter((r): r is Rol => RolSchema.safeParse(r).success),
+    }
+  })
+
 export type UsuarioAutenticado = z.infer<typeof UsuarioAutenticadoSchema>
 
 /** FE-006: la sesión es una unión discriminada, no varios booleanos. */
